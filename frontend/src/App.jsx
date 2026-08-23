@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Routes, Route, NavLink, useLocation } from "react-router-dom";
-import { initTelegramApp, getRawInitData } from "./lib/telegram.js";
+import { initTelegramApp, getRawInitData, waitForTelegramWebApp } from "./lib/telegram.js";
 import { verifyTelegramLogin, getToken } from "./lib/api.js";
 
 import Home from "./pages/Home.jsx";
@@ -33,7 +33,13 @@ export default function App() {
     }
 
     async function bootstrap() {
-      initTelegramApp();
+      // Wait for Telegram WebApp SDK to load
+      const tg = await waitForTelegramWebApp();
+
+      if (tg) {
+        initTelegramApp();
+      }
+
       const initData = getRawInitData();
 
       if (!initData) {
