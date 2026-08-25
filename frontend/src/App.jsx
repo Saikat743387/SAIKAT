@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Routes, Route, NavLink, useLocation } from "react-router-dom";
 import { initTelegramApp, getRawInitData, waitForTelegramWebApp } from "./lib/telegram.js";
+import { playClick } from "./lib/clickSound";
 import { verifyTelegramLogin, getToken } from "./lib/api.js";
 
 import Home from "./pages/Home.jsx";
@@ -128,17 +129,18 @@ export default function App() {
 
 function TabBar() {
   const tabs = [
-    { to: "/", label: "🏠 Home" },
-    { to: "/tasks", label: "🎯 Tasks" },
-    { to: "/referral", label: "👥 Referral" },
-    { to: "/withdrawal", label: "💰 Withdraw" },
-    { to: "/history", label: "📜 History" },
+    { to: "/", icon: "🏠", label: "Home" },
+    { to: "/tasks", icon: "🎯", label: "Tasks" },
+    { to: "/referral", icon: "👥", label: "Referrals" },
+    { to: "/withdrawal", icon: "💰", label: "Withdraw" },
+    { to: "/history", icon: "📜", label: "History" },
   ];
   return (
     <div className="tabbar">
       {tabs.map((t) => (
-        <NavLink key={t.to} to={t.to} end className={({ isActive }) => (isActive ? "active" : "")}>
-          {t.label}
+        <NavLink key={t.to} to={t.to} end className={({ isActive }) => (isActive ? "active" : "")} onMouseDown={() => { playClick(); }} >
+          <span className="tab-icon">{t.icon}</span>
+          <span className="tab-label">{t.label}</span>
         </NavLink>
       ))}
     </div>
