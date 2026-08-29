@@ -1,0 +1,9 @@
+﻿{
+  "name": "galaxy-app-root",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "vercel-build": "cd frontend && npm install && npm run build && cd ../backend && npm install",
+    "install": "cd frontend && npm install && cd ../backend && npm install"
+  }
+}
