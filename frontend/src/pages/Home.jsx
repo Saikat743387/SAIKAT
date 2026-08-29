@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { fetchMe, claimDaily, claimAdReward } from "../lib/api.js";
+import { playClick } from "../lib/clickSound";
 
 export default function Home() {
   const [me, setMe] = useState(null);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [claiming, setClaiming] = useState(false);
   const [watchingAd, setWatchingAd] = useState(false);
 
@@ -25,8 +27,11 @@ export default function Home() {
   async function handleDailyClaim() {
     setClaiming(true);
     setError("");
+    setSuccess("");
     try {
-      await claimDaily();
+      const reward = await claimDaily();
+      setMe((current) => current ? { ...current, coins: reward.coins, totalEarned: current.totalEarned + reward.claimed, lastDailyClaimAt: new Date().toISOString() } : current);
+      setSuccess(`Daily reward added: +${reward.claimed} coins`);
       await load();
     } catch (e) {
       setError(e?.response?.data?.error || "Claim failed");
@@ -41,11 +46,19 @@ export default function Home() {
   async function handleWatchAd() {
     setWatchingAd(true);
     setError("");
+    setSuccess("");
     try {
       // TODO: integrate real ad network SDK here, e.g.:
       // const adRef = await AdNetworkSDK.showRewardedAd();
       const adRef = `demo-${Date.now()}`;
-      await claimAdReward(adRef);
+      const reward = await claimAdReward(adRef);
+      setMe((current) => current ? {
+        ...current,
+        coins: reward.coins,
+        totalEarned: current.totalEarned + reward.claimed,
+        adClickCount: (current.adClickCount || 0) + 1,
+      } : current);
+      setSuccess(`Ad counted: +${reward.claimed} coins`);
       await load();
     } catch (e) {
       setError(e?.response?.data?.error || "Ad reward failed");
@@ -63,12 +76,19 @@ export default function Home() {
       <div className="card">
         <p className="muted">👋 Welcome, {me.firstName || me.username || "Player"}</p>
         <div className="coin-balance">🪙 {me.coins.toLocaleString()} Coins</div>
+        <div className="row" style={{ marginTop: 12 }}>
+          <span>📺 Ad Click Count</span>
+          <strong>{me.adClickCount || 0}</strong>
+        </div>
       </div>
 
       <div className="card">
         <p style={{ marginTop: 0 }}>🎁 Daily Reward</p>
         <p className="muted">Open the app once a day to claim +250 coins.</p>
-        <button className="btn" disabled={claiming || alreadyClaimedToday} onClick={handleDailyClaim}>
+        <button className="btn" disabled={claiming || alreadyClaimedToday} onClick={() => {
+          playClick();
+          handleDailyClaim();
+        }}>
           {alreadyClaimedToday ? "Already claimed today" : claiming ? "Claiming…" : "CLAIM +250"}
         </button>
       </div>
@@ -76,7 +96,10 @@ export default function Home() {
       <div className="card">
         <p style={{ marginTop: 0 }}>📺 Watch Ad</p>
         <p className="muted">Watch a full ad to earn +100 coins.</p>
-        <button className="btn" disabled={watchingAd} onClick={handleWatchAd}>
+        <button className="btn" disabled={watchingAd} onClick={() => {
+          playClick();
+          handleWatchAd();
+        }}>
           {watchingAd ? "Loading ad…" : "WATCH AD +100"}
         </button>
       </div>
@@ -96,6 +119,7 @@ export default function Home() {
         </div>
       </div>
 
+      {success && <p className="success-text">{success}</p>}
       {error && <p className="error-text">{error}</p>}
     </div>
   );

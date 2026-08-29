@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
+import { playClick } from "../../lib/clickSound";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 
@@ -71,7 +72,10 @@ export default function AdminDashboard() {
           <h1>📊 Admin Dashboard</h1>
           <p className="muted">Welcome back, {adminUsername}!</p>
         </div>
-        <button onClick={handleLogout} className="btn-logout">
+        <button onClick={(e) => {
+          playClick();
+          handleLogout();
+        }} className="btn-logout">
           Logout
         </button>
       </div>

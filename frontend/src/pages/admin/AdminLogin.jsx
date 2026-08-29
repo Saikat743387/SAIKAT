@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { playClick } from "../../lib/clickSound";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 
@@ -23,6 +24,7 @@ export default function AdminLogin() {
     e.preventDefault();
     setError("");
     setLoading(true);
+    playClick(); // Play click sound on submit
 
     try {
       const { data } = await axios.post(`${API_BASE_URL}/admin/login`, {

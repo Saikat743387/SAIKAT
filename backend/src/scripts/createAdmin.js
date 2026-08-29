@@ -16,7 +16,10 @@ async function main() {
 
   const existing = await Admin.findOne({ username });
   if (existing) {
-    console.log(`Admin "${username}" already exists.`);
+    console.log(`Admin "${username}" already exists. Updating password...`);
+    existing.passwordHash = await bcrypt.hash(password, 10);
+    await existing.save();
+    console.log(`Admin "${username}" password updated.`);
     await mongoose.disconnect();
     return;
   }

@@ -16,7 +16,7 @@ export default function History() {
         {txs.map((tx) => (
           <div className="row" key={tx._id}>
             <span>{labelFor(tx.type)}</span>
-            <strong style={{ color: tx.amount >= 0 ? "#4ee08a" : "#ff7676" }}>
+            <strong style={{ color: tx.amount >= 0 ? "#168a45" : "#dc2626" }}>
               {tx.amount >= 0 ? "+" : ""}
               {tx.amount.toLocaleString()}
             </strong>

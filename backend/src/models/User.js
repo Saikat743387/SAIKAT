@@ -19,6 +19,12 @@ const userSchema = new mongoose.Schema(
 
     lastDailyClaimAt: { type: Date, default: null },
     lastActiveAt: { type: Date, default: Date.now },
+
+    // Account status for admin moderation
+    isBlocked: { type: Boolean, default: false },
+    blockedAt: { type: Date, default: null },
+    blockedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Admin", default: null },
+    blockReason: { type: String, default: "" },
   },
   { timestamps: true }
 );

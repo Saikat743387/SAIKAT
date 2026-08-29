@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { fetchMe, requestWithdrawal, fetchWithdrawalHistory } from "../lib/api.js";
+import { playClick } from "../lib/clickSound";
 
 const MIN_WITHDRAWAL = 50000;
 
@@ -79,7 +80,9 @@ export default function Withdrawal() {
             <input value={upiId} onChange={(e) => setUpiId(e.target.value)} placeholder="UPI ID (e.g. name@bank)" />
           )}
 
-          <button className="btn" disabled={!eligible || submitting} type="submit">
+          <button className="btn" disabled={!eligible || submitting} type="submit" onClick={(e) => {
+          playClick();
+        }}>
             {submitting ? "Submitting…" : "Request Withdrawal"}
           </button>
         </form>

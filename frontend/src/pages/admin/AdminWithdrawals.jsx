@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
+import { playClick } from "../../lib/clickSound";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 
@@ -121,7 +122,10 @@ export default function AdminWithdrawals() {
           <h1>💰 Withdrawal Management</h1>
           <p className="muted">{withdrawals.length} withdrawal(s) found</p>
         </div>
-        <button onClick={handleLogout} className="btn-logout">
+        <button onClick={(e) => {
+          playClick();
+          handleLogout();
+        }} className="btn-logout">
           Logout
         </button>
       </div>
@@ -144,19 +148,28 @@ export default function AdminWithdrawals() {
       <div className="filter-tabs">
         <button
           className={`filter-tab ${filter === "PENDING" ? "active" : ""}`}
-          onClick={() => setFilter("PENDING")}
+          onClick={(e) => {
+            playClick();
+            setFilter("PENDING");
+          }}
         >
           ⏳ Pending
         </button>
         <button
           className={`filter-tab ${filter === "SUCCESSFUL" ? "active" : ""}`}
-          onClick={() => setFilter("SUCCESSFUL")}
+          onClick={(e) => {
+            playClick();
+            setFilter("SUCCESSFUL");
+          }}
         >
           ✅ Approved
         </button>
         <button
           className={`filter-tab ${filter === "REJECTED" ? "active" : ""}`}
-          onClick={() => setFilter("REJECTED")}
+          onClick={(e) => {
+            playClick();
+            setFilter("REJECTED");
+          }}
         >
           ❌ Rejected
         </button>

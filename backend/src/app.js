@@ -43,7 +43,17 @@ app.use(async (req, res, next) => {
   }
 });
 
-app.get("/api/health", (req, res) => res.json({ ok: true }));
+app.get("/api/health", (req, res) =>
+  res.json({
+    ok: true,
+    env: {
+      mongodb: Boolean(process.env.MONGODB_URI),
+      telegramBotToken: Boolean(process.env.TELEGRAM_BOT_TOKEN),
+      jwtSecret: Boolean(process.env.JWT_SECRET),
+      adminJwtSecret: Boolean(process.env.ADMIN_JWT_SECRET),
+    },
+  })
+);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
