@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import { fetchMe, claimAdReward } from "../lib/api.js";
 import { playClick } from "../lib/clickSound";
 
@@ -19,12 +19,18 @@ const TASK_NAMES = [
 export default function Tasks() {
   const [me, setMe] = useState(null);
   const [tasks, setTasks] = useState([]);
+  const [adsWatchedCount, setAdsWatchedCount] = useState(0);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
   useEffect(() => {
     fetchMe()
-      .then(setMe)
+      .then(user => {
+        setMe(user);
+        if (user?.adClickCount !== undefined) {
+            setAdsWatchedCount(user.adClickCount);
+        }
+      })
       .catch(() => {});
 
     const initial = Array.from({ length: TASK_COUNT }, (_, i) => ({
@@ -60,6 +66,21 @@ export default function Tasks() {
     }
   }
 
+  async function handleWatchExtraAd() {
+    if (adsWatchedCount >= 10) return;
+    setError("");
+    setSuccess("");
+    try {
+      const adRef = `extra-ad-${Date.now()}`;
+      const reward = await claimAdReward(adRef);
+      setSuccess(`+${reward.claimed} coins earned!`);
+      setAdsWatchedCount(prev => prev + 1);
+      setMe((current) => current ? { ...current, coins: reward.coins } : current);
+    } catch (e) {
+      setError(e?.response?.data?.error || "Ad reward failed");
+    }
+  }
+
   return (
     <div className="screen">
       <div className="card">
@@ -68,6 +89,29 @@ export default function Tasks() {
           Complete tasks to earn bonus coins. Watch ads to earn +100 coins
           per task.
         </p>
+      </div>
+
+      <div className="card" style={{ marginBottom: 14 }}>
+        <div className="row">
+          <strong style={{ fontSize: 16 }}>Watch Ads ({adsWatchedCount}/10)</strong>
+          <span className="badge" style={{
+            background: adsWatchedCount >= 10 ? "#dcfce7" : "#eff6ff",
+            color: adsWatchedCount >= 10 ? "#166534" : "#2563eb"
+          }}>
+            {adsWatchedCount >= 10 ? "Completed" : "Available"}
+          </span>
+        </div>
+        <button
+          className="btn"
+          disabled={adsWatchedCount >= 10}
+          onClick={() => {
+            playClick();
+            handleWatchExtraAd();
+          }}
+          style={{ marginTop: 10 }}
+        >
+          {adsWatchedCount >= 10 ? "Completed" : "Watch Ad"}
+        </button>
       </div>
 
       {tasks.map((task) => (
@@ -104,7 +148,7 @@ export default function Tasks() {
                 ? "✅ Done"
                 : task.status === "watching"
                 ? "⏳ Watching…"
-                : "🪙 +100"}
+                : "💎 +100"}
             </span>
           </div>
           <button

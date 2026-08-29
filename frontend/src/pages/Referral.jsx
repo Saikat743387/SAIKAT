@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import { fetchReferralInfo, fetchReferralHistory } from "../lib/api.js";
 import { playClick } from "../lib/clickSound";
 
@@ -10,7 +10,6 @@ export default function Referral() {
   const [info, setInfo] = useState(null);
   const [history, setHistory] = useState([]);
   const [copied, setCopied] = useState(false);
-  const [showShareOptions, setShowShareOptions] = useState(false);
 
   useEffect(() => {
     fetchReferralInfo().then(setInfo).catch(() => {});
@@ -39,7 +38,6 @@ export default function Referral() {
         "_blank"
       );
     }
-    setShowShareOptions(false);
   }
 
   return (
@@ -57,45 +55,29 @@ export default function Referral() {
               playClick();
               copyLink();
             }}>{copied ? "Copied!" : "Copy Referral Link"}</button>
-            <button
-              className="btn btn-secondary"
-              style={{ marginTop: 8 }}
-              onClick={() => {
-                playClick();
-                setShowShareOptions((v) => !v);
-              }}
-            >
-              Share
-            </button>
-            {showShareOptions && (
-              <div
-                className="share-options"
-                style={{
-                  display: "flex",
-                  gap: 10,
-                  marginTop: 10,
-                }}
-              >
-                <button
-                  className="share-btn whatsapp"
-                  onClick={() => {
-                    playClick();
-                    openShare("whatsapp");
-                  }}
-                >
-                  📱 WhatsApp
-                </button>
-                <button
-                  className="share-btn telegram"
-                  onClick={() => {
-                    playClick();
-                    openShare("telegram");
-                  }}
-                >
-                  ✈️ Telegram
-                </button>
-              </div>
-            )}
+            <div className="share-options" style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 10 }}>
+                <p style={{ margin: 0, fontSize: 13, color: "var(--muted-color)" }}>Share link:</p>
+                <div style={{ display: "flex", gap: 10 }}>
+                    <button
+                      className="btn"
+                      onClick={() => {
+                        playClick();
+                        openShare("whatsapp");
+                      }}
+                    >
+                      📱 WhatsApp
+                    </button>
+                    <button
+                      className="btn"
+                      onClick={() => {
+                        playClick();
+                        openShare("telegram");
+                      }}
+                    >
+                      ✈️ Telegram
+                    </button>
+                </div>
+            </div>
           </>
         )}
         <div className="row" style={{ marginTop: 12 }}>

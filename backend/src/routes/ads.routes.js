@@ -1,4 +1,4 @@
-import { Router } from "express";
+﻿import { Router } from "express";
 import { requireAuth } from "../middleware/requireAuth.js";
 import { applyCoinTransaction } from "../utils/coinWallet.js";
 import { TX_TYPE } from "../models/CoinTransaction.js";
@@ -6,14 +6,6 @@ import AdReward from "../models/AdReward.js";
 
 const router = Router();
 
-// POST /api/ads/reward  { adRef }
-//
-// IMPORTANT: `adRef` must be a unique id that YOUR chosen ad network hands
-// back through a server-to-server reward callback (or a signed token you
-// verify here) once it confirms the user actually watched the full ad.
-// This route must never pay out just because the frontend *says* an ad
-// finished — that "watch button" alone can be scripted/faked. Plug your
-// ad network's verification here before trusting adRef.
 router.post("/reward", requireAuth, async (req, res, next) => {
   try {
     const { adRef } = req.body;
@@ -22,6 +14,20 @@ router.post("/reward", requireAuth, async (req, res, next) => {
     const existing = await AdReward.findOne({ adRef });
     if (existing) {
       return res.status(400).json({ error: "This ad reward has already been claimed" });
+    }
+
+    const startOfToday = new Date();
+    startOfToday.setUTCHours(0, 0, 0, 0);
+    const endOfToday = new Date();
+    endOfToday.setUTCHours(23, 59, 59, 999);
+
+    const todayCount = await AdReward.countDocuments({
+      userId: req.user._id,
+      createdAt: { $gte: startOfToday, $lte: endOfToday }
+    });
+
+    if (todayCount >= 10) {
+      return res.status(400).json({ error: "Maximum of 10 ads per day reached" });
     }
 
     const amount = Number(process.env.AD_REWARD_COINS || 100);

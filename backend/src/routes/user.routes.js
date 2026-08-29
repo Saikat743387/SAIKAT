@@ -1,10 +1,11 @@
-import { Router } from "express";
+﻿import { Router } from "express";
 import { requireAuth } from "../middleware/requireAuth.js";
 import { applyCoinTransaction } from "../utils/coinWallet.js";
 import { TX_TYPE } from "../models/CoinTransaction.js";
 import CoinTransaction from "../models/CoinTransaction.js";
 import Withdrawal from "../models/Withdrawal.js";
 import Referral from "../models/Referral.js";
+import AdReward from "../models/AdReward.js";
 
 const router = Router();
 
@@ -17,26 +18,40 @@ function isSameCalendarDay(a, b) {
 }
 
 // GET /api/user/me
-router.get("/me", requireAuth, async (req, res) => {
-  const u = req.user;
-  res.json({
-    telegramUserId: u.telegramUserId,
-    username: u.username,
-    firstName: u.firstName,
-    lastName: u.lastName,
-    coins: u.coins,
-    referralCode: u.referralCode,
-    totalReferrals: u.totalReferrals,
-    totalEarned: u.totalEarned,
-    totalWithdrawn: u.totalWithdrawn,
-    lastDailyClaimAt: u.lastDailyClaimAt,
-    createdAt: u.createdAt,
-  });
+router.get("/me", requireAuth, async (req, res, next) => {
+  try {
+    const u = req.user;
+    
+    const startOfToday = new Date();
+    startOfToday.setUTCHours(0, 0, 0, 0);
+    const endOfToday = new Date();
+    endOfToday.setUTCHours(23, 59, 59, 999);
+    
+    const adClickCount = await AdReward.countDocuments({ 
+        userId: u._id,
+        createdAt: { $gte: startOfToday, $lte: endOfToday }
+    });
+
+    res.json({
+      telegramUserId: u.telegramUserId,
+      username: u.username,
+      firstName: u.firstName,
+      lastName: u.lastName,
+      coins: u.coins,
+      referralCode: u.referralCode,
+      totalReferrals: u.totalReferrals,
+      totalEarned: u.totalEarned,
+      totalWithdrawn: u.totalWithdrawn,
+      adClickCount,
+      lastDailyClaimAt: u.lastDailyClaimAt,
+      createdAt: u.createdAt,
+    });
+  } catch (e) {
+    next(e);
+  }
 });
 
 // POST /api/user/daily-claim
-// Server decides eligibility from lastDailyClaimAt — the button can be
-// pressed a thousand times a day and the user still only gets paid once.
 router.post("/daily-claim", requireAuth, async (req, res, next) => {
   try {
     const u = req.user;
