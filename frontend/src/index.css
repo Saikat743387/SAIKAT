@@ -62,6 +62,44 @@ body {
   color: var(--accent);
 }
 
+/* Share Buttons */
+.share-options {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.share-btn {
+  flex: 1;
+  min-width: 120px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s, opacity 0.15s;
+  color: #fff;
+}
+
+.share-btn:hover {
+  transform: translateY(-1px);
+  opacity: 0.9;
+}
+
+.share-btn:active {
+  transform: translateY(0);
+}
+
+.share-btn.whatsapp {
+  background: #25d366;
+}
+
+.share-btn.telegram {
+  background: #0088cc;
+}
+
 .row {
   display: flex;
   justify-content: space-between;

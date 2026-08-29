@@ -1,10 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { fetchReferralInfo, fetchReferralHistory } from "../lib/api.js";
+import { playClick } from "../lib/clickSound";
+
+const REFERRAL_MESSAGE = encodeURIComponent(
+  "Join me on Galaxy STAR and start earning coins! Use my referral link:"
+);
 
 export default function Referral() {
   const [info, setInfo] = useState(null);
   const [history, setHistory] = useState([]);
   const [copied, setCopied] = useState(false);
+  const [showShareOptions, setShowShareOptions] = useState(false);
 
   useEffect(() => {
     fetchReferralInfo().then(setInfo).catch(() => {});
@@ -18,6 +24,24 @@ export default function Referral() {
     setTimeout(() => setCopied(false), 1500);
   }
 
+  function openShare(platform) {
+    if (!info) return;
+    const encodedLink = encodeURIComponent(info.shareLink);
+
+    if (platform === "whatsapp") {
+      window.open(
+        `https://wa.me/?text=${REFERRAL_MESSAGE}%20${encodedLink}`,
+        "_blank"
+      );
+    } else if (platform === "telegram") {
+      window.open(
+        `https://t.me/share/url?url=${encodedLink}&text=${REFERRAL_MESSAGE}`,
+        "_blank"
+      );
+    }
+    setShowShareOptions(false);
+  }
+
   return (
     <div className="screen">
       <div className="card">
@@ -25,8 +49,53 @@ export default function Referral() {
         <p className="muted">Invite friends — earn +5,000 coins per successful referral.</p>
         {info && (
           <>
-            <input readOnly value={info.shareLink} onClick={copyLink} />
-            <button className="btn" onClick={copyLink}>{copied ? "Copied!" : "Copy Referral Link"}</button>
+            <input readOnly value={info.shareLink} onClick={() => {
+              playClick();
+              copyLink();
+            }} />
+            <button className="btn" onClick={() => {
+              playClick();
+              copyLink();
+            }}>{copied ? "Copied!" : "Copy Referral Link"}</button>
+            <button
+              className="btn btn-secondary"
+              style={{ marginTop: 8 }}
+              onClick={() => {
+                playClick();
+                setShowShareOptions((v) => !v);
+              }}
+            >
+              Share
+            </button>
+            {showShareOptions && (
+              <div
+                className="share-options"
+                style={{
+                  display: "flex",
+                  gap: 10,
+                  marginTop: 10,
+                }}
+              >
+                <button
+                  className="share-btn whatsapp"
+                  onClick={() => {
+                    playClick();
+                    openShare("whatsapp");
+                  }}
+                >
+                  📱 WhatsApp
+                </button>
+                <button
+                  className="share-btn telegram"
+                  onClick={() => {
+                    playClick();
+                    openShare("telegram");
+                  }}
+                >
+                  ✈️ Telegram
+                </button>
+              </div>
+            )}
           </>
         )}
         <div className="row" style={{ marginTop: 12 }}>
