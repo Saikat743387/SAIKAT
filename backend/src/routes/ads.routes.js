@@ -1,4 +1,4 @@
-﻿import { Router } from "express";
+import { Router } from "express";
 import { requireAuth } from "../middleware/requireAuth.js";
 import { applyCoinTransaction } from "../utils/coinWallet.js";
 import { TX_TYPE } from "../models/CoinTransaction.js";

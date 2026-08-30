@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { fetchReferralInfo, fetchReferralHistory } from "../lib/api.js";
 import { playClick } from "../lib/clickSound";
 
