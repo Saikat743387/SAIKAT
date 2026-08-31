@@ -14,15 +14,23 @@ import crypto from "crypto";
  */
 export function verifyInitData(initData, botToken) {
   if (!initData || typeof initData !== "string") {
-    throw new Error("initData is required");
+    const err = new Error("initData is required");
+    err.status = 400;
+    throw err;
   }
   if (!botToken) {
-    throw new Error("TELEGRAM_BOT_TOKEN is not configured on the server");
+    const err = new Error("TELEGRAM_BOT_TOKEN is not configured on the server");
+    err.status = 500;
+    throw err;
   }
 
   const params = new URLSearchParams(initData);
   const hash = params.get("hash");
-  if (!hash) throw new Error("initData missing hash");
+  if (!hash) {
+    const err = new Error("initData missing hash");
+    err.status = 400;
+    throw err;
+  }
   params.delete("hash");
 
   const dataCheckArr = [];
@@ -36,17 +44,25 @@ export function verifyInitData(initData, botToken) {
   const computedHash = crypto.createHmac("sha256", secretKey).update(dataCheckString).digest("hex");
 
   if (computedHash !== hash) {
-    throw new Error("Invalid Telegram initData signature");
+    const err = new Error("Invalid Telegram initData signature");
+    err.status = 400;
+    throw err;
   }
 
   const authDate = Number(params.get("auth_date"));
   const maxAge = Number(process.env.INITDATA_MAX_AGE_SECONDS || 86400);
   if (!authDate || Date.now() / 1000 - authDate > maxAge) {
-    throw new Error("Telegram initData has expired, please reopen the app");
+    const err = new Error("Telegram initData has expired, please reopen the app");
+    err.status = 400;
+    throw err;
   }
 
   const userRaw = params.get("user");
-  if (!userRaw) throw new Error("initData missing user field");
+  if (!userRaw) {
+    const err = new Error("initData missing user field");
+    err.status = 400;
+    throw err;
+  }
 
   const user = JSON.parse(userRaw);
   const startParam = params.get("start_param") || null; // used for referral codes

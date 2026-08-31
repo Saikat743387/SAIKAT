@@ -15,6 +15,8 @@ import adminRoutes from "./routes/admin.routes.js";
 
 const app = express();
 
+app.set('trust proxy', true); // Required for express-rate-limit on Vercel (proxy headers)
+
 app.use(helmet());
 app.use(
   cors({
