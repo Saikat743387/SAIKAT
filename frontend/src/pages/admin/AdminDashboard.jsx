@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import axios from "axios";
+import {
+  fetchAdminDashboard,
+  clearAdminToken,
+} from "../../lib/adminApi.js";
 import { playClick } from "../../lib/clickSound";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState(null);
@@ -13,27 +14,20 @@ export default function AdminDashboard() {
   const adminUsername = localStorage.getItem("admin_username");
 
   useEffect(() => {
-    checkAuth();
-    loadStats();
-  }, []);
-
-  function checkAuth() {
-    const token = localStorage.getItem("admin_token");
-    if (!token) {
+    if (!localStorage.getItem("admin_token")) {
       navigate("/admin");
+      return;
     }
-  }
+    loadStats();
+  }, [navigate]);
 
   async function loadStats() {
     try {
-      const token = localStorage.getItem("admin_token");
-      const { data } = await axios.get(`${API_BASE_URL}/admin/dashboard`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const data = await fetchAdminDashboard();
       setStats(data);
     } catch (err) {
       if (err?.response?.status === 401) {
-        localStorage.removeItem("admin_token");
+        clearAdminToken();
         navigate("/admin");
       } else {
         setError("Failed to load dashboard stats");
@@ -44,8 +38,7 @@ export default function AdminDashboard() {
   }
 
   function handleLogout() {
-    localStorage.removeItem("admin_token");
-    localStorage.removeItem("admin_username");
+    clearAdminToken();
     navigate("/admin");
   }
 

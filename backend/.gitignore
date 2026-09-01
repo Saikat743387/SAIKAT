@@ -1,0 +1,10 @@
+.vercel
+.env*
+*.log
+test*
+diagnose*
+check*
+create*
+reset*
+verify*
+*.local

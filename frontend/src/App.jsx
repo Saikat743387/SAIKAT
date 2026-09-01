@@ -63,15 +63,37 @@ export default function App() {
 
   if (status === "loading") {
     return (
-      <div className="screen" style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh" }}>
+      <div className="screen loading-screen">
         <p className="muted">Loading Galaxy App…</p>
       </div>
     );
   }
 
+  // Check if the user's account is blocked (set by api.js 403 interceptor)
+  if (!isAdminRoute) {
+    try {
+      const blockedInfo = JSON.parse(localStorage.getItem("galaxy_blocked_reason") || "null");
+      if (blockedInfo) {
+        return (
+          <div className="screen loading-screen" style={{ textAlign: "center" }}>
+            <p className="error-text" style={{ fontSize: "1.1rem", marginBottom: "0.5rem" }}>
+              🚫 Account Blocked
+            </p>
+            <p className="muted" style={{ fontSize: "0.9rem" }}>{blockedInfo.reason}</p>
+            {blockedInfo.blockedAt && (
+              <p className="muted" style={{ fontSize: "0.8rem", marginTop: "0.75rem" }}>
+                Blocked at: {new Date(blockedInfo.blockedAt).toLocaleString()}
+              </p>
+            )}
+          </div>
+        );
+      }
+    } catch (_) { /* ignore parse errors */ }
+  }
+
   if (status === "error" && !isAdminRoute) {
     return (
-      <div className="screen" style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", textAlign: "center" }}>
+      <div className="screen loading-screen" style={{ textAlign: "center" }}>
         <p className="error-text">{error}</p>
       </div>
     );

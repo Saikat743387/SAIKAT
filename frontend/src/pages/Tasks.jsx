@@ -83,23 +83,25 @@ export default function Tasks() {
 
   return (
     <div className="screen">
-      <div className="card">
-        <p style={{ marginTop: 0 }}>🎯 Tasks</p>
-        <p className="muted">
-          Complete tasks to earn bonus coins. Watch ads to earn +100 coins
-          per task.
-        </p>
+      <div className="page-header">
+        <p className="page-kicker">Earn Coins</p>
+        <h1 className="page-title">Tasks</h1>
       </div>
 
-      <div className="card" style={{ marginBottom: 14 }}>
-        <div className="row">
-          <strong style={{ fontSize: 16 }}>Watch Ads ({adsWatchedCount}/10)</strong>
-          <span className="badge" style={{
-            background: adsWatchedCount >= 10 ? "#dcfce7" : "#eff6ff",
-            color: adsWatchedCount >= 10 ? "#166534" : "#2563eb"
-          }}>
-            {adsWatchedCount >= 10 ? "Completed" : "Available"}
-          </span>
+      {/* Ad Progress Card */}
+      <div className="action-card" style={{ marginBottom: 18 }}>
+        <div className="action-card-header">
+          <div className="action-card-icon" style={{ background: "linear-gradient(135deg, rgba(255, 200, 87, 0.25), rgba(255, 200, 87, 0.1))", border: "1px solid rgba(255, 200, 87, 0.35)" }}>🎯</div>
+          <div>
+            <h3 className="action-card-title">Watch Ads Progress</h3>
+            <p className="action-card-desc">Complete up to 10 ad tasks daily</p>
+          </div>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+          <div style={{ flex: 1, height: 8, background: "rgba(255, 255, 255, 0.08)", borderRadius: 4, overflow: "hidden", marginRight: 12 }}>
+            <div style={{ width: `${Math.min(adsWatchedCount / 10 * 100, 100)}%`, height: "100%", background: "linear-gradient(90deg, #8b6cff, #ffc857)", borderRadius: 4, transition: "width 0.3s ease" }}></div>
+          </div>
+          <span style={{ fontSize: 14, fontWeight: 700, color: "#ffd700", whiteSpace: "nowrap" }}>{adsWatchedCount}/10</span>
         </div>
         <button
           className="btn"
@@ -108,66 +110,38 @@ export default function Tasks() {
             playClick();
             handleWatchExtraAd();
           }}
-          style={{ marginTop: 10 }}
         >
-          {adsWatchedCount >= 10 ? "Completed" : "Watch Ad"}
+          {adsWatchedCount >= 10 ? "✓ Daily Complete" : "Watch Ad"}
         </button>
       </div>
 
+      {/* Task Cards */}
       {tasks.map((task) => (
-        <div className="card" key={task.id}>
-          <div className="row" style={{ paddingBottom: 10, marginBottom: 10, borderBottomColor: "var(--border-color)" }}>
-            <div>
-              <strong style={{ fontSize: 15 }}>{task.name}</strong>
-              <p className="muted" style={{ margin: "4px 0 0", fontSize: 13 }}>
-                Watch a short ad to earn coins
-              </p>
+        <div className={`task-card ${task.status === "done" ? "completed" : task.status === "watching" ? "watching" : ""}`} key={task.id}>
+          <div className="task-card-header">
+            <div className="task-icon">📺</div>
+            <div className="task-info">
+              <h3 className="task-name">{task.name}</h3>
+              <p className="task-desc">Watch a short ad to earn coins</p>
             </div>
-            <span
-              className="badge"
-              style={{
-                background:
-                  task.status === "done"
-                    ? "#dcfce7"
-                    : task.status === "watching"
-                    ? "#fef3c7"
-                    : "#eff6ff",
-                color:
-                  task.status === "done"
-                    ? "#166534"
-                    : task.status === "watching"
-                    ? "#92400e"
-                    : "#2563eb",
-                fontWeight: 700,
-                fontSize: 12,
-                padding: "4px 10px",
-                borderRadius: 20,
-              }}
-            >
-              {task.status === "done"
-                ? "✅ Done"
-                : task.status === "watching"
-                ? "⏳ Watching…"
-                : "💎 +100"}
+            <span className="task-reward-badge">
+              {task.status === "done" ? "✓ Done" : task.status === "watching" ? "⏳ …" : "+100"}
             </span>
           </div>
+          <span className={`task-status ${task.status}`}>
+            {task.status === "done" ? "Completed" : task.status === "watching" ? "Watching Ad…" : "Available"}
+          </span>
           <button
             className="btn"
+            style={{ marginTop: 12 }}
             disabled={task.status !== "available"}
-            style={
-              task.status === "done"
-                ? { background: "#16a34a", cursor: "default" }
-                : task.status === "watching"
-                ? { background: "#d97706", cursor: "not-allowed" }
-                : {}
-            }
             onClick={() => {
               playClick();
               handleWatchAd(task.id);
             }}
           >
             {task.status === "done"
-              ? "Completed"
+              ? "Completed ✓"
               : task.status === "watching"
               ? "Loading ad…"
               : "Watch Ad"}

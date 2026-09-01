@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import axios from "axios";
+import {
+  fetchAdminUsers,
+  fetchAdminUserDetails,
+  toggleBlockUser,
+  clearAdminToken,
+} from "../../lib/adminApi.js";
 import { playClick } from "../../lib/clickSound";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 
 export default function AdminUsers() {
   const navigate = useNavigate();
@@ -19,35 +22,28 @@ export default function AdminUsers() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [userLoading, setUserLoading] = useState(false);
 
-  // ---------------------------------------------------------------------
-  // Auth check & data loading
-  // ---------------------------------------------------------------------
   useEffect(() => {
-    checkAuth();
+    if (!localStorage.getItem("admin_token")) {
+      navigate("/admin");
+      return;
+    }
     loadUsers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, limit, searchTerm]);
 
-  function checkAuth() {
-    const token = localStorage.getItem("admin_token");
-    if (!token) {
-      navigate("/admin");
-    }
-  }
-
   async function loadUsers() {
     try {
       setLoading(true);
-      const token = localStorage.getItem("admin_token");
-      const { data } = await axios.get(
-        `${API_BASE_URL}/admin/users/search?q=${encodeURIComponent(searchTerm)}&page=${page}&limit=${limit}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const data = await fetchAdminUsers({
+        q: searchTerm,
+        page,
+        limit,
+      });
       setUsers(data.users);
       setTotal(data.total);
     } catch (err) {
       if (err?.response?.status === 401) {
-        localStorage.removeItem("admin_token");
+        clearAdminToken();
         navigate("/admin");
       } else {
         setError("Failed to load users");
@@ -57,21 +53,14 @@ export default function AdminUsers() {
     }
   }
 
-  // ---------------------------------------------------------------------
-  // User detail loading
-  // ---------------------------------------------------------------------
   async function loadUserDetails(userId) {
     try {
       setUserLoading(true);
-      const token = localStorage.getItem("admin_token");
-      const { data } = await axios.get(
-        `${API_BASE_URL}/admin/users/${userId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const data = await fetchAdminUserDetails(userId);
       setSelectedUser(data);
     } catch (err) {
       if (err?.response?.status === 401) {
-        localStorage.removeItem("admin_token");
+        clearAdminToken();
         navigate("/admin");
       } else {
         setError("Failed to load user details");
@@ -85,25 +74,16 @@ export default function AdminUsers() {
     setSelectedUser(null);
   }
 
-  // ---------------------------------------------------------------------
-  // Block / Unblock handling
-  // ---------------------------------------------------------------------
-  async function toggleBlockUser(userId, action, reason = "") {
+  async function toggleBlock(userId, action, reason = "") {
     try {
-      const token = localStorage.getItem("admin_token");
-      await axios.post(
-        `${API_BASE_URL}/admin/users/${userId}/block`,
-        { action, reason },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      // Refresh the list and, if needed, the detail view
+      await toggleBlockUser(userId, action, reason);
       await loadUsers();
       if (selectedUser && selectedUser.user && selectedUser.user._id === userId) {
         await loadUserDetails(userId);
       }
     } catch (err) {
       if (err?.response?.status === 401) {
-        localStorage.removeItem("admin_token");
+        clearAdminToken();
         navigate("/admin");
       } else {
         setError(`Failed to ${action} user: ${err?.response?.data?.error || "Unknown error"}`);
@@ -111,9 +91,6 @@ export default function AdminUsers() {
     }
   }
 
-  // ---------------------------------------------------------------------
-  // UI helpers
-  // ---------------------------------------------------------------------
   const totalPages = Math.ceil(total / limit);
 
   function isSameDay(dateStr) {
@@ -127,9 +104,6 @@ export default function AdminUsers() {
     );
   }
 
-  // ---------------------------------------------------------------------
-  // Render
-  // ---------------------------------------------------------------------
   return (
     <div className="admin-container">
       <div className="admin-header">
@@ -137,7 +111,7 @@ export default function AdminUsers() {
           <h1>👥 User Management</h1>
           <p className="muted">Total: {total.toLocaleString()} users</p>
         </div>
-        <button onClick={() => { localStorage.removeItem("admin_token"); localStorage.removeItem("admin_username"); navigate("/admin"); }} className="btn-logout">
+        <button onClick={() => { clearAdminToken(); navigate("/admin"); }} className="btn-logout">
           Logout
         </button>
       </div>
@@ -217,7 +191,7 @@ export default function AdminUsers() {
                               alert("Block reason is required.");
                               return;
                             }
-                            toggleBlockUser(user._id, action, reason);
+                            toggleBlock(user._id, action, reason);
                           }}
                         >
                           {user.isBlocked ? "Unblock" : "Block"}
@@ -316,7 +290,7 @@ export default function AdminUsers() {
                     alert("Block reason required.");
                     return;
                   }
-                  toggleBlockUser(selectedUser.user._id, action, reason);
+                  toggleBlock(selectedUser.user._id, action, reason);
                 }}
               >
                 {selectedUser.user.isBlocked ? "Unblock User" : "Block User"}

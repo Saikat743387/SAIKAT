@@ -6,8 +6,18 @@ import CoinTransaction from "../models/CoinTransaction.js";
 import Withdrawal from "../models/Withdrawal.js";
 import Referral from "../models/Referral.js";
 import AdReward from "../models/AdReward.js";
+import AppSettings from "../models/AppSettings.js";
 
 const router = Router();
+
+async function getDailyRewardCoins() {
+  try {
+    const s = await AppSettings.findOne({ key: "global" });
+    return s?.dailyRewardCoins ?? Number(process.env.DAILY_CLAIM_COINS || 250);
+  } catch {
+    return Number(process.env.DAILY_CLAIM_COINS || 250);
+  }
+}
 
 function isSameCalendarDay(a, b) {
   return (
@@ -61,7 +71,7 @@ router.post("/daily-claim", requireAuth, async (req, res, next) => {
       return res.status(400).json({ error: "Daily reward already claimed today" });
     }
 
-    const amount = Number(process.env.DAILY_CLAIM_COINS || 250);
+    const amount = await getDailyRewardCoins();
     const { user } = await applyCoinTransaction({
       userId: u._id,
       type: TX_TYPE.DAILY_CLAIM,

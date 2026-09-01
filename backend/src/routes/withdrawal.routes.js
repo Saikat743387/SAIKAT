@@ -3,8 +3,18 @@ import { requireAuth } from "../middleware/requireAuth.js";
 import { applyCoinTransaction } from "../utils/coinWallet.js";
 import { TX_TYPE } from "../models/CoinTransaction.js";
 import Withdrawal from "../models/Withdrawal.js";
+import AppSettings from "../models/AppSettings.js";
 
 const router = Router();
+
+async function getMinWithdrawalCoins() {
+  try {
+    const s = await AppSettings.findOne({ key: "global" });
+    return s?.minimumWithdrawalCoins ?? Number(process.env.MIN_WITHDRAWAL_COINS || 50000);
+  } catch {
+    return Number(process.env.MIN_WITHDRAWAL_COINS || 50000);
+  }
+}
 
 // POST /api/withdrawal/request
 // body: { method: "USDT_TRC20" | "UPI", coins, usdtAddress?, upiId? }
@@ -15,7 +25,7 @@ const router = Router();
 router.post("/request", requireAuth, async (req, res, next) => {
   try {
     const { method, coins, usdtAddress, upiId } = req.body;
-    const minWithdrawal = Number(process.env.MIN_WITHDRAWAL_COINS || 50000);
+    const minWithdrawal = await getMinWithdrawalCoins();
 
     if (!["USDT_TRC20", "UPI"].includes(method)) {
       return res.status(400).json({ error: "Invalid withdrawal method" });

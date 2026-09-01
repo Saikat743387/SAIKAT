@@ -4,7 +4,6 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 import rateLimit from "express-rate-limit";
-import { connectDB } from "./config/db.js";
 
 import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/user.routes.js";
@@ -33,17 +32,6 @@ app.use(morgan("dev"));
 // limiting on serverless, use a shared store (e.g. Upstash Redis) instead.
 const limiter = rateLimit({ windowMs: 60 * 1000, max: 60 });
 app.use("/api/", limiter);
-
-// Every request first makes sure MongoDB is connected (cheap after the
-// first call, since connectDB() caches the connection).
-app.use(async (req, res, next) => {
-  try {
-    await connectDB();
-    next();
-  } catch (e) {
-    next(e);
-  }
-});
 
 app.get("/api/health", (req, res) =>
   res.json({

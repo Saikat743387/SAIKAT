@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import axios from "axios";
+import {
+  fetchAdminWithdrawals,
+  approveWithdrawal,
+  rejectWithdrawal,
+  clearAdminToken,
+} from "../../lib/adminApi.js";
 import { playClick } from "../../lib/clickSound";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 
 export default function AdminWithdrawals() {
   const [withdrawals, setWithdrawals] = useState([]);
@@ -14,32 +17,23 @@ export default function AdminWithdrawals() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    checkAuth();
-    loadWithdrawals();
-  }, [filter]);
-
-  function checkAuth() {
-    const token = localStorage.getItem("admin_token");
-    if (!token) {
+    if (!localStorage.getItem("admin_token")) {
       navigate("/admin");
+      return;
     }
-  }
+    loadWithdrawals();
+  }, [filter, navigate]);
 
   async function loadWithdrawals() {
     try {
       setLoading(true);
-      const token = localStorage.getItem("admin_token");
-      const url = filter
-        ? `${API_BASE_URL}/admin/withdrawals?status=${filter}`
-        : `${API_BASE_URL}/admin/withdrawals`;
-
-      const { data } = await axios.get(url, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setWithdrawals(data);
+      const params = filter ? { status: filter } : {};
+      const data = await fetchAdminWithdrawals(params);
+      // The enhanced endpoint returns { withdrawals, total, page, limit }
+      setWithdrawals(data.withdrawals || data);
     } catch (err) {
       if (err?.response?.status === 401) {
-        localStorage.removeItem("admin_token");
+        clearAdminToken();
         navigate("/admin");
       } else {
         setError("Failed to load withdrawals");
@@ -51,21 +45,11 @@ export default function AdminWithdrawals() {
 
   async function handleApprove(withdrawalId) {
     const note = prompt("Add admin note (optional):");
-    if (note === null) return; // User cancelled
+    if (note === null) return;
 
     setProcessingId(withdrawalId);
     try {
-      const token = localStorage.getItem("admin_token");
-      await axios.post(
-        `${API_BASE_URL}/admin/withdrawals/${withdrawalId}/approve`,
-        { note },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      await approveWithdrawal(withdrawalId, note);
       alert("✅ Withdrawal approved successfully!");
       loadWithdrawals();
     } catch (err) {
@@ -84,17 +68,7 @@ export default function AdminWithdrawals() {
 
     setProcessingId(withdrawalId);
     try {
-      const token = localStorage.getItem("admin_token");
-      await axios.post(
-        `${API_BASE_URL}/admin/withdrawals/${withdrawalId}/reject`,
-        { note },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      await rejectWithdrawal(withdrawalId, note);
       alert("❌ Withdrawal rejected and coins refunded to user");
       loadWithdrawals();
     } catch (err) {
@@ -105,8 +79,7 @@ export default function AdminWithdrawals() {
   }
 
   function handleLogout() {
-    localStorage.removeItem("admin_token");
-    localStorage.removeItem("admin_username");
+    clearAdminToken();
     navigate("/admin");
   }
 

@@ -3,8 +3,18 @@ import { requireAuth } from "../middleware/requireAuth.js";
 import { applyCoinTransaction } from "../utils/coinWallet.js";
 import { TX_TYPE } from "../models/CoinTransaction.js";
 import AdReward from "../models/AdReward.js";
+import AppSettings from "../models/AppSettings.js";
 
 const router = Router();
+
+async function getAdRewardCoins() {
+  try {
+    const s = await AppSettings.findOne({ key: "global" });
+    return s?.adRewardCoins ?? Number(process.env.AD_REWARD_COINS || 100);
+  } catch {
+    return Number(process.env.AD_REWARD_COINS || 100);
+  }
+}
 
 router.post("/reward", requireAuth, async (req, res, next) => {
   try {
@@ -30,7 +40,7 @@ router.post("/reward", requireAuth, async (req, res, next) => {
       return res.status(400).json({ error: "Maximum of 10 ads per day reached" });
     }
 
-    const amount = Number(process.env.AD_REWARD_COINS || 100);
+    const amount = await getAdRewardCoins();
 
     await AdReward.create({ userId: req.user._id, adRef, rewardCoins: amount });
 

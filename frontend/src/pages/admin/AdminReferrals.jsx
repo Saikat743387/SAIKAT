@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import axios from "axios";
+import {
+  fetchAdminReferrals,
+  clearAdminToken,
+} from "../../lib/adminApi.js";
 import { playClick } from "../../lib/clickSound";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 
 export default function AdminReferrals() {
   const [referrals, setReferrals] = useState([]);
@@ -12,28 +13,21 @@ export default function AdminReferrals() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    checkAuth();
-    loadReferrals();
-  }, []);
-
-  function checkAuth() {
-    const token = localStorage.getItem("admin_token");
-    if (!token) {
+    if (!localStorage.getItem("admin_token")) {
       navigate("/admin");
+      return;
     }
-  }
+    loadReferrals();
+  }, [navigate]);
 
   async function loadReferrals() {
     try {
       setLoading(true);
-      const token = localStorage.getItem("admin_token");
-      const { data } = await axios.get(`${API_BASE_URL}/admin/referrals`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setReferrals(data);
+      const data = await fetchAdminReferrals();
+      setReferrals(data.referrals || data);
     } catch (err) {
       if (err?.response?.status === 401) {
-        localStorage.removeItem("admin_token");
+        clearAdminToken();
         navigate("/admin");
       } else {
         setError("Failed to load referrals");
@@ -44,8 +38,7 @@ export default function AdminReferrals() {
   }
 
   function handleLogout() {
-    localStorage.removeItem("admin_token");
-    localStorage.removeItem("admin_username");
+    clearAdminToken();
     navigate("/admin");
   }
 
@@ -139,7 +132,7 @@ export default function AdminReferrals() {
                     </span>
                   </td>
                   <td>
-                    {ref.credited ? (
+                    {ref.status === "CREDITED" ? (
                       <span className="status-badge status-successful">
                         ✅ Credited
                       </span>

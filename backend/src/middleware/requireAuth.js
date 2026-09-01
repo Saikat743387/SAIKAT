@@ -15,6 +15,9 @@ export async function requireAuth(req, res, next) {
     const payload = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findOne({ telegramUserId: payload.telegramUserId });
     if (!user) return res.status(401).json({ error: "User not found" });
+    if (user.isBlocked) {
+      return res.status(403).json({ error: "Account blocked", blockedAt: user.blockedAt, reason: user.blockReason });
+    }
 
     user.lastActiveAt = new Date();
     await user.save();

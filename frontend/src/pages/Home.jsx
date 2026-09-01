@@ -40,16 +40,11 @@ export default function Home() {
     }
   }
 
-  // Placeholder ad flow: replace this with your chosen ad network's SDK.
-  // The SDK should give you a callback / server-verifiable ref ONLY after
-  // the user has watched the entire ad — pass that as adRef below.
   async function handleWatchAd() {
     setWatchingAd(true);
     setError("");
     setSuccess("");
     try {
-      // TODO: integrate real ad network SDK here, e.g.:
-      // const adRef = await AdNetworkSDK.showRewardedAd();
       const adRef = `demo-${Date.now()}`;
       const reward = await claimAdReward(adRef);
       setMe((current) => current ? {
@@ -68,53 +63,106 @@ export default function Home() {
   }
 
   if (!me) {
-    return <div className="screen"><p className="muted">Loading…</p></div>;
+    return <div className="screen loading-screen"><div className="spinner"></div><p className="muted">Loading Galaxy App…</p></div>;
   }
 
   return (
     <div className="screen">
-      <div className="card">
-        <p className="muted">👋 Welcome, {me.firstName || me.username || "Player"}</p>
-        <div className="coin-balance">🪙 {me.coins.toLocaleString()} Coins</div>
-        <div className="row" style={{ marginTop: 12 }}>
-          <span>📺 Ad Click Count</span>
-          <strong>{me.adClickCount || 0}</strong>
+      {/* Hero Section */}
+      <div className="hero-section">
+        <p className="hero-greeting">👋 Welcome, {me.firstName || me.username || "Player"}</p>
+        <div className="hero-coin">
+          <div className="hero-coin-icon">🪙</div>
+          <div>
+            <div className="hero-balance">{me.coins.toLocaleString()}</div>
+            <div className="hero-balance-label">Galaxy Coins</div>
+          </div>
         </div>
       </div>
 
-      <div className="card">
-        <p style={{ marginTop: 0 }}>🎁 Daily Reward</p>
-        <p className="muted">Open the app once a day to claim +250 coins.</p>
-        <button className="btn" disabled={claiming || alreadyClaimedToday} onClick={() => {
-          playClick();
-          handleDailyClaim();
-        }}>
-          {alreadyClaimedToday ? "Already claimed today" : claiming ? "Claiming…" : "CLAIM +250"}
-        </button>
-      </div>
-
-      <div className="card">
-        <p style={{ marginTop: 0 }}>📺 Watch Ad</p>
-        <p className="muted">Watch a full ad to earn +100 coins.</p>
-        <button className="btn" disabled={watchingAd} onClick={() => {
-          playClick();
-          handleWatchAd();
-        }}>
-          {watchingAd ? "Loading ad…" : "WATCH AD +100"}
-        </button>
-      </div>
-
-      <div className="card">
-        <div className="row">
-          <span>👥 Referrals</span>
-          <strong>{me.totalReferrals}</strong>
+      {/* Stats Row */}
+      <div className="stats-row">
+        <div className="stat-item">
+          <div className="stat-item-icon">🪙</div>
+          <span className="stat-item-value">{me.coins.toLocaleString()}</span>
+          <span className="stat-item-label">Coins</span>
         </div>
-        <div className="row">
-          <span>💼 Total Earned</span>
+        <div className="stat-item">
+          <div className="stat-item-icon">📺</div>
+          <span className="stat-item-value">{me.adClickCount || 0}</span>
+          <span className="stat-item-label">Ads</span>
+        </div>
+        <div className="stat-item">
+          <div className="stat-item-icon">👥</div>
+          <span className="stat-item-value">{me.totalReferrals || 0}</span>
+          <span className="stat-item-label">Refs</span>
+        </div>
+      </div>
+
+      {/* Daily Reward Card */}
+      <div className="action-card">
+        <div className="action-card-header">
+          <div className="action-card-icon daily">🎁</div>
+          <div>
+            <h3 className="action-card-title">Daily Reward</h3>
+            <p className="action-card-desc">Open the app once a day to claim bonus coins.</p>
+          </div>
+        </div>
+        <div className="action-card-reward">
+          <span>+</span>
+          <span>250 Coins</span>
+        </div>
+        <button
+          className="btn"
+          disabled={claiming || alreadyClaimedToday}
+          onClick={() => {
+            playClick();
+            handleDailyClaim();
+          }}
+        >
+          {alreadyClaimedToday ? "✓ Claimed Today" : claiming ? "Claiming…" : "CLAIM +250"}
+        </button>
+      </div>
+
+      {/* Watch Ad Card */}
+      <div className="action-card">
+        <div className="action-card-header">
+          <div className="action-card-icon ad">📺</div>
+          <div>
+            <h3 className="action-card-title">Watch Ad</h3>
+            <p className="action-card-desc">Watch a short ad to earn instant coins.</p>
+          </div>
+        </div>
+        <div className="action-card-reward">
+          <span>+</span>
+          <span>100 Coins</span>
+        </div>
+        <button
+          className="btn"
+          disabled={watchingAd}
+          onClick={() => {
+            playClick();
+            handleWatchAd();
+          }}
+        >
+          {watchingAd ? "Loading Ad…" : "WATCH AD +100"}
+        </button>
+      </div>
+
+      {/* Quick Stats Card */}
+      <div className="action-card">
+        <div className="action-card-header">
+          <div className="action-card-icon" style={{ background: "linear-gradient(135deg, rgba(139, 108, 255, 0.2), rgba(139, 108, 255, 0.1))", border: "1px solid rgba(139, 108, 255, 0.3)" }}>📊</div>
+          <div>
+            <h3 className="action-card-title">Your Stats</h3>
+          </div>
+        </div>
+        <div className="row" style={{ borderBottom: "none" }}>
+          <span className="muted">💼 Total Earned</span>
           <strong>{me.totalEarned.toLocaleString()}</strong>
         </div>
-        <div className="row">
-          <span>💰 Withdrawn</span>
+        <div className="row" style={{ borderBottom: "none" }}>
+          <span className="muted">💰 Withdrawn</span>
           <strong>{me.totalWithdrawn.toLocaleString()}</strong>
         </div>
       </div>
