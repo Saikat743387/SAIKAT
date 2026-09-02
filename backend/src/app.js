@@ -34,15 +34,13 @@ app.use("/api/", async (req, res, next) => {
   // Use IP + path as the rate limit key
   const key = `${req.ip}:${req.path}`;
 
-  const allowed = await mongodbRateLimitStore.incr(key, WINDOW_MS, MAX_REQUESTS);
+  const { allowed, count, reset } = await mongodbRateLimitStore.check(key, WINDOW_MS, MAX_REQUESTS);
   if (!allowed) {
-    const { count, reset } = await mongodbRateLimitStore.get(key, WINDOW_MS);
     res.set("Retry-After", String(reset - Math.floor(Date.now() / 1000)));
     return res.status(429).json({ error: "Too many requests. Please try again later." });
   }
 
   // Attach remaining info to response headers
-  const { count, reset } = await mongodbRateLimitStore.get(key, WINDOW_MS);
   res.set("X-RateLimit-Limit", String(MAX_REQUESTS));
   res.set("X-RateLimit-Remaining", String(Math.max(0, MAX_REQUESTS - count)));
   res.set("X-RateLimit-Reset", String(reset));
