@@ -1,18 +1,18 @@
 :root {
-  --tg-theme-bg-color: #0e1525;
+  --tg-theme-bg-color: #131b2e;
   --tg-theme-text-color: #f0f3ff;
   --accent: #8b6cff;
   --accent-2: #ffc857;
   --accent-glow: rgba(139, 108, 255, 0.45);
   --gold-glow: rgba(255, 200, 87, 0.28);
-  --card-bg: rgba(24, 32, 60, 0.72);
-  --card-border: rgba(167, 180, 255, 0.2);
+  --card-bg: rgba(32, 44, 80, 0.65);
+  --card-border: rgba(167, 180, 255, 0.25);
   --success: #3ee89a;
   --danger: #ff6b7a;
   --muted-color: #b0b8d8;
-  --border-color: rgba(167, 180, 255, 0.15);
-  --surface: #151d35;
-  --input-bg: rgba(12, 18, 38, 0.85);
+  --border-color: rgba(167, 180, 255, 0.2);
+  --surface: #1a2440;
+  --input-bg: rgba(20, 28, 56, 0.8);
   --text-primary: #f4f6ff;
   --text-secondary: #c0c8e8;
   font-family: "Segoe UI", "Trebuchet MS", system-ui, -apple-system, sans-serif;
@@ -31,7 +31,7 @@ body {
     radial-gradient(1200px 600px at 10% -10%, rgba(124, 92, 255, 0.22), transparent 55%),
     radial-gradient(900px 500px at 110% 8%, rgba(255, 184, 72, 0.1), transparent 50%),
     radial-gradient(700px 500px at 50% 120%, rgba(64, 120, 255, 0.14), transparent 55%),
-    linear-gradient(180deg, #0e1525 0%, #111a30 48%, #0d1320 100%);
+    linear-gradient(180deg, #131b2e 0%, #1a2540 48%, #151d32 100%);
   background-attachment: fixed;
 }
 
@@ -810,7 +810,7 @@ body::before {
   right: 16px;
   max-width: 480px;
   margin: 0 auto;
-  background: rgba(12, 16, 34, 0.92);
+  background: rgba(19, 27, 46, 0.92);
   display: flex;
   justify-content: space-around;
   padding: 10px 8px;
@@ -1012,7 +1012,7 @@ input::placeholder {
   padding: 14px;
   border-radius: 12px;
   border: 1px solid #3a3f5c;
-  background: #12162a;
+  background: #1a2240;
   color: white;
   font-size: 15px;
   transition: border-color 0.3s;

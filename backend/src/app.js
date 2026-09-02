@@ -3,7 +3,6 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
-import rateLimit from "express-rate-limit";
 
 import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/user.routes.js";
@@ -11,10 +10,11 @@ import adsRoutes from "./routes/ads.routes.js";
 import referralRoutes from "./routes/referral.routes.js";
 import withdrawalRoutes from "./routes/withdrawal.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
+import mongodbRateLimitStore from "./middleware/mongodbRateLimitStore.js";
 
 const app = express();
 
-app.set('trust proxy', true); // Required for express-rate-limit on Vercel (proxy headers)
+app.set("trust proxy", true); // Required for rate limiting on Vercel (proxy headers)
 
 app.use(helmet());
 app.use(
@@ -25,13 +25,30 @@ app.use(
 app.use(express.json());
 app.use(morgan("dev"));
 
-// NOTE on Vercel: this in-memory limiter only protects within a single warm
-// function instance — it resets whenever a fresh cold-start container spins
-// up, and doesn't share state across multiple concurrent instances. It's a
-// mild speed bump, not real abuse protection. For production-grade rate
-// limiting on serverless, use a shared store (e.g. Upstash Redis) instead.
-const limiter = rateLimit({ windowMs: 60 * 1000, max: 60 });
-app.use("/api/", limiter);
+// MongoDB-backed rate limiter — persists across function instances and cold starts.
+// This is critical for Vercel serverless where in-memory state is lost between invocations.
+const WINDOW_MS = 60 * 1000; // 1 minute
+const MAX_REQUESTS = 60;
+
+app.use("/api/", async (req, res, next) => {
+  // Use IP + path as the rate limit key
+  const key = `${req.ip}:${req.path}`;
+
+  const allowed = await mongodbRateLimitStore.incr(key, WINDOW_MS, MAX_REQUESTS);
+  if (!allowed) {
+    const { count, reset } = await mongodbRateLimitStore.get(key, WINDOW_MS);
+    res.set("Retry-After", String(reset - Math.floor(Date.now() / 1000)));
+    return res.status(429).json({ error: "Too many requests. Please try again later." });
+  }
+
+  // Attach remaining info to response headers
+  const { count, reset } = await mongodbRateLimitStore.get(key, WINDOW_MS);
+  res.set("X-RateLimit-Limit", String(MAX_REQUESTS));
+  res.set("X-RateLimit-Remaining", String(Math.max(0, MAX_REQUESTS - count)));
+  res.set("X-RateLimit-Reset", String(reset));
+
+  next();
+});
 
 app.get("/api/health", (req, res) =>
   res.json({

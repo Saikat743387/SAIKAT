@@ -45,8 +45,11 @@ const adminWriteLimiter = rateLimit({
 
 // POST /api/admin/seed  { username, password }
 // One-time endpoint to create the initial admin account.
-// After first use, this endpoint is disabled (checks for existing admin).
+// DISABLED by default in production. Set ALLOW_ADMIN_SEED=true to enable.
 router.post("/seed", seedLimiter, async (req, res, next) => {
+  if (process.env.NODE_ENV === "production" && process.env.ALLOW_ADMIN_SEED !== "true") {
+    return res.status(403).json({ error: "Seed endpoint is disabled in production." });
+  }
   try {
     const { username, password } = req.body;
     if (!username || !password) {

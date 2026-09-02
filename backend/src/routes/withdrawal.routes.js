@@ -67,14 +67,4 @@ router.post("/request", requireAuth, async (req, res, next) => {
   }
 });
 
-// GET /api/withdrawal/history
-router.get("/history", requireAuth, async (req, res, next) => {
-  try {
-    const withdrawals = await Withdrawal.find({ userId: req.user._id }).sort({ createdAt: -1 });
-    res.json(withdrawals);
-  } catch (e) {
-    next(e);
-  }
-});
-
 export default router;
