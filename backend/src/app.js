@@ -1,4 +1,4 @@
-import "dotenv/config";
+﻿import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -32,20 +32,26 @@ const MAX_REQUESTS = 60;
 
 app.use("/api/", async (req, res, next) => {
   // Use IP + path as the rate limit key
-  const key = `${req.ip}:${req.path}`;
+  const key = \$req.ip\:\$req.path\`;
 
-  const { allowed, count, reset } = await mongodbRateLimitStore.check(key, WINDOW_MS, MAX_REQUESTS);
-  if (!allowed) {
-    res.set("Retry-After", String(reset - Math.floor(Date.now() / 1000)));
-    return res.status(429).json({ error: "Too many requests. Please try again later." });
+  try {
+    const { allowed, count, reset } = await mongodbRateLimitStore.check(key, WINDOW_MS, MAX_REQUESTS);
+    if (!allowed) {
+      res.set("Retry-After", String(reset - Math.floor(Date.now() / 1000)));
+      return res.status(429).json({ error: "Too many requests. Please try again later." });
+    }
+
+    // Attach remaining info to response headers
+    res.set("X-RateLimit-Limit", String(MAX_REQUESTS));
+    res.set("X-RateLimit-Remaining", String(Math.max(0, MAX_REQUESTS - count)));
+    res.set("X-RateLimit-Reset", String(reset));
+
+    next();
+  } catch (err) {
+    // Log the error and return 500
+    console.error("[RateLimiter Middleware] Unexpected error:", err);
+    res.status(500).json({ error: "Rate limiting system currently unavailable." });
   }
-
-  // Attach remaining info to response headers
-  res.set("X-RateLimit-Limit", String(MAX_REQUESTS));
-  res.set("X-RateLimit-Remaining", String(Math.max(0, MAX_REQUESTS - count)));
-  res.set("X-RateLimit-Reset", String(reset));
-
-  next();
 });
 
 app.get("/api/health", (req, res) =>

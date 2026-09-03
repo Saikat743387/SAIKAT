@@ -1,4 +1,4 @@
-import { Router } from "express";
+﻿import { Router } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import rateLimit from "express-rate-limit";
@@ -15,37 +15,33 @@ import AppSettings from "../models/AppSettings.js";
 const router = Router();
 
 // Strict rate limiter for the seed endpoint — only 3 attempts per hour.
-// This is intentionally stricter than the global API limiter because
-// a successful seed call creates a privileged admin account.
 const seedLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
+  windowMs: 60 * 60 * 1000, 
   max: 3,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: "Too many seed attempts. Try again later." },
 });
 
-// Rate limiter for admin login — 5 attempts per 15 minutes to prevent brute force.
+// Rate limiter for admin login — 5 attempts per 15 minutes.
 const adminLoginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 15 * 60 * 1000, 
   max: 5,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: "Too many login attempts. Try again in 15 minutes." },
 });
 
-// Rate limiter for sensitive admin write actions (block/unblock, adjust balance).
+// Rate limiter for sensitive admin write actions.
 const adminWriteLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
+  windowMs: 60 * 60 * 1000, 
   max: 30,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: "Too many admin actions. Try again later." },
 });
 
-// POST /api/admin/seed  { username, password }
-// One-time endpoint to create the initial admin account.
-// DISABLED by default in production. Set ALLOW_ADMIN_SEED=true to enable.
+// POST /api/admin/seed
 router.post("/seed", seedLimiter, async (req, res, next) => {
   if (process.env.NODE_ENV === "production" && process.env.ALLOW_ADMIN_SEED !== "true") {
     return res.status(403).json({ error: "Seed endpoint is disabled in production." });
@@ -63,17 +59,14 @@ router.post("/seed", seedLimiter, async (req, res, next) => {
 
     const passwordHash = await bcrypt.hash(password, 10);
     const admin = await Admin.create({ username, passwordHash, role: "SUPERADMIN" });
-    console.log(`[SEED] Admin "${username}" created.`);
-
-    // Disable the seed endpoint after first use by removing this route
-    // (In practice, we just return success and the caller should never call again)
-    res.json({ message: `Admin "${username}" created successfully.`, admin: { username: admin.username, role: admin.role } });
+    
+    res.json({ message: "Admin created successfully.", admin: { username: admin.username, role: admin.role } });
   } catch (e) {
     next(e);
   }
 });
 
-// POST /api/admin/login  { username, password }
+// POST /api/admin/login
 router.post("/login", adminLoginLimiter, async (req, res, next) => {
   try {
     const { username, password } = req.body;
@@ -110,13 +103,13 @@ router.get("/dashboard", requireAdmin, async (req, res, next) => {
       coinAgg,
     ] = await Promise.all([
       User.countDocuments(),
-      User.countDocuments({ createdAt: { $gte: startOfToday } }),
-      User.countDocuments({ createdAt: { $gte: sevenDaysAgo } }),
-      User.countDocuments({ createdAt: { $gte: thirtyDaysAgo } }),
-      User.countDocuments({ lastActiveAt: { $gte: fiveMinAgo } }),
+      User.countDocuments({ createdAt: { \: startOfToday } }),
+      User.countDocuments({ createdAt: { \: sevenDaysAgo } }),
+      User.countDocuments({ createdAt: { \: thirtyDaysAgo } }),
+      User.countDocuments({ lastActiveAt: { \: fiveMinAgo } }),
       Withdrawal.countDocuments({ status: "PENDING" }),
       Withdrawal.countDocuments({ status: "SUCCESSFUL" }),
-      User.aggregate([{ $group: { _id: null, totalCoins: { $sum: "$coins" } } }]),
+      User.aggregate([{ \: { _id: null, totalCoins: { \: "\" } } }]),
     ]);
 
     res.json({
@@ -134,7 +127,7 @@ router.get("/dashboard", requireAdmin, async (req, res, next) => {
   }
 });
 
-// GET /api/admin/users?page=1&limit=50
+// GET /api/admin/users
 router.get("/users", requireAdmin, async (req, res, next) => {
   try {
     const page = Math.max(1, Number(req.query.page) || 1);
@@ -150,36 +143,7 @@ router.get("/users", requireAdmin, async (req, res, next) => {
   }
 });
 
-// ========== WITHDRAWAL MANAGEMENT ENHANCEMENTS ==========
-
-// GET /api/admin/withdrawals - Enhanced with filtering and pagination
-router.get("/withdrawals", requireAdmin, async (req, res, next) => {
-  try {
-    const { status, page = 1, limit = 50 } = req.query;
-    const filter = {};
-
-    if (status && ['PENDING', 'SUCCESSFUL', 'REJECTED'].includes(status)) {
-      filter.status = status;
-    }
-
-    const skip = (page - 1) * limit;
-
-    const [withdrawals, total] = await Promise.all([
-      Withdrawal.find(filter)
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(parseInt(limit))
-        .populate("userId", "telegramUserId username firstName"),
-      Withdrawal.countDocuments(filter)
-    ]);
-
-    res.json({ withdrawals, total, page: parseInt(page), limit: parseInt(limit) });
-  } catch (e) {
-    next(e);
-  }
-});
-
-// POST /api/admin/withdrawals/:id/approve - Enhanced with idempotency check
+// POST /api/admin/withdrawals/:id/approve
 router.post("/withdrawals/:id/approve", requireAdmin, adminWriteLimiter, async (req, res, next) => {
   try {
     const withdrawalId = req.params.id;
@@ -189,11 +153,8 @@ router.post("/withdrawals/:id/approve", requireAdmin, adminWriteLimiter, async (
     const withdrawal = await Withdrawal.findById(withdrawalId);
     if (!withdrawal) return res.status(404).json({ error: "Withdrawal not found" });
 
-    // Idempotency check
     if (withdrawal.status !== "PENDING") {
-      return res.status(400).json({
-        error: `Withdrawal is not pending. Current status: ${withdrawal.status}`
-      });
+      return res.status(400).json({ error: Withdrawal is not pending. Status: \$withdrawal.status\` });
     }
 
     withdrawal.status = "SUCCESSFUL";
@@ -201,12 +162,8 @@ router.post("/withdrawals/:id/approve", requireAdmin, adminWriteLimiter, async (
     withdrawal.adminNote = note || "";
     await withdrawal.save();
 
-    // Update user's total withdrawn
-    await User.findByIdAndUpdate(withdrawal.userId, {
-      $inc: { totalWithdrawn: withdrawal.coins }
-    });
+    await User.findByIdAndUpdate(withdrawal.userId, { \: { totalWithdrawn: withdrawal.coins } });
 
-    // Log activity
     await ActivityLog.create({
       adminId,
       action: 'withdrawal_approved',
@@ -223,7 +180,7 @@ router.post("/withdrawals/:id/approve", requireAdmin, adminWriteLimiter, async (
   }
 });
 
-// POST /api/admin/withdrawals/:id/reject - Enhanced with idempotency check
+// POST /api/admin/withdrawals/:id/reject
 router.post("/withdrawals/:id/reject", requireAdmin, adminWriteLimiter, async (req, res, next) => {
   try {
     const withdrawalId = req.params.id;
@@ -237,11 +194,8 @@ router.post("/withdrawals/:id/reject", requireAdmin, adminWriteLimiter, async (r
     const withdrawal = await Withdrawal.findById(withdrawalId);
     if (!withdrawal) return res.status(404).json({ error: "Withdrawal not found" });
 
-    // Idempotency check
     if (withdrawal.status !== "PENDING") {
-      return res.status(400).json({
-        error: `Withdrawal is not pending. Current status: ${withdrawal.status}`
-      });
+      return res.status(400).json({ error: Withdrawal is not pending. Status: \$withdrawal.status\` });
     }
 
     withdrawal.status = "REJECTED";
@@ -249,16 +203,14 @@ router.post("/withdrawals/:id/reject", requireAdmin, adminWriteLimiter, async (r
     withdrawal.adminNote = note;
     await withdrawal.save();
 
-    // Refund the coins back to user
     await applyCoinTransaction({
       userId: withdrawal.userId,
       type: TX_TYPE.WITHDRAWAL_REFUND,
       amount: withdrawal.coins,
       referenceId: String(withdrawal._id),
-      note: `Refund for rejected withdrawal: ${note}`
+      note: Refund: \$note\`
     });
 
-    // Log activity
     await ActivityLog.create({
       adminId,
       action: 'withdrawal_rejected',
@@ -275,70 +227,98 @@ router.post("/withdrawals/:id/reject", requireAdmin, adminWriteLimiter, async (r
   }
 });
 
-// ========== APP SETTINGS MANAGEMENT ==========
-
-// GET /api/admin/settings - Get current settings
-router.get("/settings", requireAdmin, async (req, res, next) => {
+// POST /api/admin/users/:id/block
+router.post("/users/:id/block", requireAdmin, adminWriteLimiter, async (req, res, next) => {
   try {
-    let settings = await AppSettings.findOne({ key: "global" });
+    const userId = req.params.id;
+    const adminId = req.admin._id;
+    const { action, reason } = req.body;
 
-    // If no settings exist, create default ones
-    if (!settings) {
-      settings = await AppSettings.create({ key: "global" });
+    if (!['block', 'unblock'].includes(action)) {
+      return res.status(400).json({ error: "Invalid action." });
     }
 
-    res.json(settings);
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    // Capture before state
+    const beforeState = { isBlocked: user.isBlocked, blockedAt: user.blockedAt, blockReason: user.blockReason };
+
+    if (action === 'block') {
+      if (!reason || reason.trim() === '') {
+        return res.status(400).json({ error: "Reason required" });
+      }
+      user.isBlocked = true;
+      user.blockedAt = new Date();
+      user.blockedBy = adminId;
+      user.blockReason = reason;
+    } else {
+      user.isBlocked = false;
+      user.blockedAt = null;
+      user.blockedBy = null;
+      user.blockReason = "";
+    }
+
+    await user.save();
+
+    // Capture after state
+    const afterState = { isBlocked: user.isBlocked, blockedAt: user.blockedAt, blockReason: user.blockReason };
+
+    await ActivityLog.create({
+      adminId,
+      action: action === 'block' ? 'user_blocked' : 'user_unblocked',
+      resourceType: "User",
+      resourceId: user._id,
+      details: { before: beforeState, after: afterState },
+      ipAddress: req.ip,
+      userAgent: req.get('User-Agent')
+    });
+
+    res.json({ message: "User updated successfully." });
   } catch (e) {
     next(e);
   }
 });
 
-// PUT /api/admin/settings - Update settings
+// PUT /api/admin/settings
 router.put("/settings", requireAdmin, adminWriteLimiter, async (req, res, next) => {
   try {
     const adminId = req.admin._id;
     const updates = req.body;
 
-    // Prevent updating protected fields
     const allowedUpdates = [
-      'dailyRewardCoins',
-      'adRewardCoins',
-      'referralRewardCoins',
-      'minimumWithdrawalCoins',
-      'withdrawalMethods',
-      'tasksEnabled',
-      'adsEnabled',
-      'referralsEnabled'
+      'dailyRewardCoins', 'adRewardCoins', 'referralRewardCoins',
+      'minimumWithdrawalCoins', 'withdrawalMethods', 'tasksEnabled',
+      'adsEnabled', 'referralsEnabled'
     ];
 
-    // Filter to only allowed updates
     const filteredUpdates = {};
-    allowedUpdates.forEach(key => {
-      if (updates[key] !== undefined) {
-        filteredUpdates[key] = updates[key];
-      }
-    });
+    allowedUpdates.forEach(key => { if (updates[key] !== undefined) filteredUpdates[key] = updates[key]; });
 
     if (Object.keys(filteredUpdates).length === 0) {
-      return res.status(400).json({ error: "No valid settings to update" });
+      return res.status(400).json({ error: "No updateable settings" });
     }
+
+    const currentSettings = await AppSettings.findOne({ key: "global" }) || {};
+    const before = {};
+    const after = {};
+    Object.keys(filteredUpdates).forEach(key => {
+      before[key] = currentSettings[key];
+      after[key] = filteredUpdates[key];
+    });
 
     const settings = await AppSettings.findOneAndUpdate(
       { key: "global" },
-      {
-        ...filteredUpdates,
-        updatedAt: new Date()
-      },
+      { ...filteredUpdates, updatedAt: new Date() },
       { new: true, upsert: true }
     );
 
-    // Log activity
     await ActivityLog.create({
       adminId,
       action: 'settings_updated',
       resourceType: "AppSettings",
       resourceId: settings._id,
-      details: filteredUpdates,
+      details: { before, after },
       ipAddress: req.ip,
       userAgent: req.get('User-Agent')
     });
@@ -349,59 +329,42 @@ router.put("/settings", requireAdmin, adminWriteLimiter, async (req, res, next) 
   }
 });
 
-// ========== MAINTENANCE MODE ==========
-
-// GET /api/admin/maintenance - Get maintenance status
-router.get("/maintenance", requireAdmin, async (req, res, next) => {
-  try {
-    const settings = await AppSettings.findOne({ key: "global" });
-    const maintenanceMode = settings ? !!settings.maintenanceMode : false;
-    const maintenanceMessage = settings ? settings.maintenanceMessage : "System under maintenance. Please try again later.";
-
-    res.json({
-      maintenanceMode,
-      maintenanceMessage
-    });
-  } catch (e) {
-    next(e);
-  }
-});
-
-// PUT /api/admin/maintenance - Update maintenance status
+// PUT /api/admin/maintenance
 router.put("/maintenance", requireAdmin, adminWriteLimiter, async (req, res, next) => {
   try {
     const adminId = req.admin._id;
     const { maintenanceMode, maintenanceMessage } = req.body;
 
     if (typeof maintenanceMode !== 'boolean') {
-      return res.status(400).json({ error: "maintenanceMode must be a boolean" });
+      return res.status(400).json({ error: "Invalid maintenanceMode" });
     }
+
+    const currentSettings = await AppSettings.findOne({ key: "global" }) || {};
+    const before = { maintenanceMode: currentSettings.maintenanceMode, maintenanceMessage: currentSettings.maintenanceMessage };
 
     const settings = await AppSettings.findOneAndUpdate(
       { key: "global" },
       {
-        maintenanceMode: !!maintenanceMode,
-        maintenanceMessage: maintenanceMessage || "System under maintenance. Please try again later.",
+        maintenanceMode,
+        maintenanceMessage: maintenanceMessage || "System under maintenance.",
         updatedAt: new Date()
       },
       { new: true, upsert: true }
     );
 
-    // Log activity
+    const after = { maintenanceMode: settings.maintenanceMode, maintenanceMessage: settings.maintenanceMessage };
+
     await ActivityLog.create({
       adminId,
       action: maintenanceMode ? 'maintenance_enabled' : 'maintenance_disabled',
       resourceType: "AppSettings",
       resourceId: settings._id,
-      details: { maintenanceMode, maintenanceMessage },
+      details: { before, after },
       ipAddress: req.ip,
       userAgent: req.get('User-Agent')
     });
 
-    res.json({
-      maintenanceMode: settings.maintenanceMode,
-      maintenanceMessage: settings.maintenanceMessage
-    });
+    res.json(settings);
   } catch (e) {
     next(e);
   }
