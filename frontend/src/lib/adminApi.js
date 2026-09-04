@@ -75,11 +75,6 @@ export async function toggleBlockUser(userId, action, reason) {
   return data;
 }
 
-export async function adjustUserBalance(userId, amount, reason) {
-  const { data } = await adminApi.post(`/admin/users/${userId}/balance/adjust`, { amount, reason });
-  return data;
-}
-
 export async function fetchAdminWithdrawals(params = {}) {
   const { data } = await adminApi.get("/admin/withdrawals", { params });
   return data;

@@ -85,7 +85,6 @@ export default function AdminReferrals() {
                 <th>Referrer</th>
                 <th>Referred User</th>
                 <th>Reward</th>
-                <th>Status</th>
                 <th>Date</th>
               </tr>
             </thead>
@@ -130,17 +129,6 @@ export default function AdminReferrals() {
                     <span className="coin-badge">
                       🪙 {ref.rewardCoins.toLocaleString()}
                     </span>
-                  </td>
-                  <td>
-                    {ref.status === "CREDITED" ? (
-                      <span className="status-badge status-successful">
-                        ✅ Credited
-                      </span>
-                    ) : (
-                      <span className="status-badge status-pending">
-                        ⏳ Pending
-                      </span>
-                    )}
                   </td>
                   <td className="date-cell">
                     {new Date(ref.createdAt).toLocaleString()}

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { fetchMe, claimAdReward } from "../lib/api.js";
+import { fetchMe, claimAdReward, fetchAppSettings } from "../lib/api.js";
 import { playClick } from "../lib/clickSound";
 
 const TASK_COUNT = 10;
@@ -20,25 +20,40 @@ export default function Tasks() {
   const [me, setMe] = useState(null);
   const [tasks, setTasks] = useState([]);
   const [adsWatchedCount, setAdsWatchedCount] = useState(0);
+  const [adRewardCoins, setAdRewardCoins] = useState(100);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
   useEffect(() => {
-    fetchMe()
-      .then(user => {
-        setMe(user);
-        if (user?.adClickCount !== undefined) {
-            setAdsWatchedCount(user.adClickCount);
+    fetchAppSettings()
+      .then((settings) => {
+        if (settings?.adRewardCoins) {
+          setAdRewardCoins(Number(settings.adRewardCoins));
         }
       })
       .catch(() => {});
 
-    const initial = Array.from({ length: TASK_COUNT }, (_, i) => ({
-      id: i,
-      name: TASK_NAMES[i],
-      status: "available",
-    }));
-    setTasks(initial);
+    fetchMe()
+      .then((user) => {
+        setMe(user);
+        const count = user?.adClickCount || 0;
+        setAdsWatchedCount(count);
+
+        const initial = Array.from({ length: TASK_COUNT }, (_, i) => ({
+          id: i,
+          name: TASK_NAMES[i],
+          status: i < count ? "done" : "available",
+        }));
+        setTasks(initial);
+      })
+      .catch(() => {
+        const initial = Array.from({ length: TASK_COUNT }, (_, i) => ({
+          id: i,
+          name: TASK_NAMES[i],
+          status: "available",
+        }));
+        setTasks(initial);
+      });
   }, []);
 
   async function handleWatchAd(index) {
@@ -52,6 +67,7 @@ export default function Tasks() {
       const adRef = `task-${index + 1}-${Date.now()}`;
       const reward = await claimAdReward(adRef);
       setSuccess(`+${reward.claimed} coins earned!`);
+      setAdsWatchedCount((prev) => Math.min(prev + 1, TASK_COUNT));
       setTasks((prev) =>
         prev.map((t, i) => (i === index ? { ...t, status: "done" } : t))
       );
@@ -67,15 +83,19 @@ export default function Tasks() {
   }
 
   async function handleWatchExtraAd() {
-    if (adsWatchedCount >= 10) return;
+    if (adsWatchedCount >= TASK_COUNT) return;
     setError("");
     setSuccess("");
     try {
+      const nextIndex = adsWatchedCount;
       const adRef = `extra-ad-${Date.now()}`;
       const reward = await claimAdReward(adRef);
       setSuccess(`+${reward.claimed} coins earned!`);
-      setAdsWatchedCount(prev => prev + 1);
-      setMe((current) => current ? { ...current, coins: reward.coins } : current);
+      setAdsWatchedCount((prev) => Math.min(prev + 1, TASK_COUNT));
+      setTasks((prev) =>
+        prev.map((t, i) => (i === nextIndex ? { ...t, status: "done" } : t))
+      );
+      setMe((current) => (current ? { ...current, coins: reward.coins } : current));
     } catch (e) {
       setError(e?.response?.data?.error || "Ad reward failed");
     }
@@ -99,19 +119,19 @@ export default function Tasks() {
         </div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
           <div style={{ flex: 1, height: 8, background: "rgba(255, 255, 255, 0.08)", borderRadius: 4, overflow: "hidden", marginRight: 12 }}>
-            <div style={{ width: `${Math.min(adsWatchedCount / 10 * 100, 100)}%`, height: "100%", background: "linear-gradient(90deg, #8b6cff, #ffc857)", borderRadius: 4, transition: "width 0.3s ease" }}></div>
+            <div style={{ width: `${Math.min((adsWatchedCount / TASK_COUNT) * 100, 100)}%`, height: "100%", background: "linear-gradient(90deg, #8b6cff, #ffc857)", borderRadius: 4, transition: "width 0.3s ease" }}></div>
           </div>
-          <span style={{ fontSize: 14, fontWeight: 700, color: "#ffd700", whiteSpace: "nowrap" }}>{adsWatchedCount}/10</span>
+          <span style={{ fontSize: 14, fontWeight: 700, color: "#ffd700", whiteSpace: "nowrap" }}>{adsWatchedCount}/{TASK_COUNT}</span>
         </div>
         <button
           className="btn"
-          disabled={adsWatchedCount >= 10}
+          disabled={adsWatchedCount >= TASK_COUNT}
           onClick={() => {
             playClick();
             handleWatchExtraAd();
           }}
         >
-          {adsWatchedCount >= 10 ? "✓ Daily Complete" : "Watch Ad"}
+          {adsWatchedCount >= TASK_COUNT ? "✓ Daily Complete" : "Watch Ad"}
         </button>
       </div>
 
@@ -125,7 +145,7 @@ export default function Tasks() {
               <p className="task-desc">Watch a short ad to earn coins</p>
             </div>
             <span className="task-reward-badge">
-              {task.status === "done" ? "✓ Done" : task.status === "watching" ? "⏳ …" : "+100"}
+              {task.status === "done" ? "✓ Done" : task.status === "watching" ? "⏳ …" : `+${adRewardCoins}`}
             </span>
           </div>
           <span className={`task-status ${task.status}`}>

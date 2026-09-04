@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from "react";
-import { fetchMe, requestWithdrawal, fetchWithdrawalHistory } from "../lib/api.js";
+import { fetchMe, requestWithdrawal, fetchWithdrawalHistory, fetchAppSettings } from "../lib/api.js";
 import { playClick } from "../lib/clickSound";
 
-const MIN_WITHDRAWAL = 50000;
+// Default min withdrawal — will be overridden by backend AppSettings on load
+const DEFAULT_MIN_WITHDRAWAL = 50000;
 
 export default function Withdrawal() {
   const [me, setMe] = useState(null);
   const [history, setHistory] = useState([]);
+  const [minWithdrawal, setMinWithdrawal] = useState(DEFAULT_MIN_WITHDRAWAL);
   const [method, setMethod] = useState("USDT_TRC20");
-  const [coins, setCoins] = useState(MIN_WITHDRAWAL);
+  const [coins, setCoins] = useState(DEFAULT_MIN_WITHDRAWAL);
   const [usdtAddress, setUsdtAddress] = useState("");
   const [upiId, setUpiId] = useState("");
   const [error, setError] = useState("");
@@ -17,6 +19,9 @@ export default function Withdrawal() {
   function load() {
     fetchMe().then(setMe).catch(() => {});
     fetchWithdrawalHistory().then(setHistory).catch(() => {});
+    fetchAppSettings().then((settings) => {
+      setMinWithdrawal(Number(settings.minimumWithdrawalCoins) || DEFAULT_MIN_WITHDRAWAL);
+    }).catch(() => {});
   }
 
   useEffect(load, []);
@@ -40,7 +45,7 @@ export default function Withdrawal() {
     }
   }
 
-  const eligible = me && me.coins >= MIN_WITHDRAWAL;
+  const eligible = me && me.coins >= minWithdrawal;
 
   return (
     <div className="screen">
@@ -53,12 +58,12 @@ export default function Withdrawal() {
       <div className="balance-card">
         <p className="balance-label">Available Balance</p>
         <h2 className="balance-amount">{me?.coins?.toLocaleString() ?? "—"}</h2>
-        <p className="balance-min">Minimum: <strong>{MIN_WITHDRAWAL.toLocaleString()}</strong> coins</p>
+        <p className="balance-min">Minimum: <strong>{minWithdrawal.toLocaleString()}</strong> coins</p>
       </div>
 
       {!eligible && (
         <p className="error-text" style={{ textAlign: "center", marginBottom: 16 }}>
-          ⚠️ You need {MIN_WITHDRAWAL.toLocaleString()} coins to withdraw. Earn more by watching ads!
+          ⚠️ You need {minWithdrawal.toLocaleString()} coins to withdraw. Earn more by watching ads!
         </p>
       )}
 
@@ -87,7 +92,7 @@ export default function Withdrawal() {
           <p className="referral-share-label" style={{ marginBottom: 8 }}>Amount (Coins)</p>
           <input
             type="number"
-            min={MIN_WITHDRAWAL}
+            min={minWithdrawal}
             step={1}
             value={coins}
             onChange={(e) => setCoins(e.target.value)}

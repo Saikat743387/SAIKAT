@@ -89,3 +89,8 @@ export async function fetchCoinHistory() {
   const { data } = await api.get("/user/history/coins");
   return data;
 }
+
+export async function fetchAppSettings() {
+  const { data } = await api.get("/admin/settings");
+  return data;
+}

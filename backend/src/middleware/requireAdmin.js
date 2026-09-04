@@ -11,6 +11,10 @@ export async function requireAdmin(req, res, next) {
     const admin = await Admin.findById(payload.adminId);
     if (!admin) return res.status(401).json({ error: "Admin not found" });
 
+    if (admin.isBlocked) {
+      return res.status(403).json({ error: "Admin account blocked", blockedAt: admin.blockedAt, reason: admin.blockReason });
+    }
+
     req.admin = admin;
     next();
   } catch (e) {

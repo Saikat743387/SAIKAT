@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
+import AppSettings from "../models/AppSettings.js";
 
 /**
  * Protects user-facing routes. Expects a Bearer JWT issued by /api/auth/verify
@@ -17,6 +18,12 @@ export async function requireAuth(req, res, next) {
     if (!user) return res.status(401).json({ error: "User not found" });
     if (user.isBlocked) {
       return res.status(403).json({ error: "Account blocked", blockedAt: user.blockedAt, reason: user.blockReason });
+    }
+
+    // Check maintenance mode before allowing any user action
+    const settings = await AppSettings.findOne({ key: "global" });
+    if (settings?.maintenanceMode) {
+      return res.status(503).json({ error: settings.maintenanceMessage || "System under maintenance. Please try again later." });
     }
 
     user.lastActiveAt = new Date();

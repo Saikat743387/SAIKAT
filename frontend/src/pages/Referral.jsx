@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { fetchReferralInfo, fetchReferralHistory } from "../lib/api.js";
+import { fetchReferralInfo, fetchReferralHistory, fetchAppSettings } from "../lib/api.js";
 import { playClick } from "../lib/clickSound";
 
 const REFERRAL_MESSAGE = encodeURIComponent(
@@ -10,10 +10,12 @@ export default function Referral() {
   const [info, setInfo] = useState(null);
   const [history, setHistory] = useState([]);
   const [copied, setCopied] = useState(false);
+  const [settings, setSettings] = useState(null);
 
   useEffect(() => {
     fetchReferralInfo().then(setInfo).catch(() => {});
     fetchReferralHistory().then(setHistory).catch(() => {});
+    fetchAppSettings().then((s) => setSettings(s)).catch(() => {});
   }, []);
 
   function copyLink() {
@@ -53,7 +55,7 @@ export default function Referral() {
         <h2 className="referral-hero-title">Invite Friends</h2>
         <div className="referral-hero-reward">
           <span>💰</span>
-          <span>Earn +5,000 Coins Per Referral</span>
+          <span>Earn +{(Number(settings?.referralRewardCoins) || 5000).toLocaleString()} Coins Per Referral</span>
         </div>
         <p className="muted" style={{ margin: 0 }}>Share your link and earn when friends join!</p>
       </div>
@@ -118,7 +120,7 @@ export default function Referral() {
         </div>
         <div className="row" style={{ borderBottom: "none" }}>
           <span className="muted">Earned from Referrals</span>
-          <strong style={{ color: "#ffd700" }}>{info ? (info.totalReferrals * 5000).toLocaleString() : "—"}</strong>
+          <strong style={{ color: "#ffd700" }}>{info ? (info.totalReferrals * (Number(settings?.referralRewardCoins) || 5000)).toLocaleString() : "—"}</strong>
         </div>
       </div>
 

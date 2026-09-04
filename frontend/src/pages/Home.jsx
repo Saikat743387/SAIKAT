@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { fetchMe, claimDaily, claimAdReward } from "../lib/api.js";
+import { fetchMe, claimDaily, claimAdReward, fetchAppSettings } from "../lib/api.js";
 import { playClick } from "../lib/clickSound";
 
 export default function Home() {
@@ -8,6 +8,8 @@ export default function Home() {
   const [success, setSuccess] = useState("");
   const [claiming, setClaiming] = useState(false);
   const [watchingAd, setWatchingAd] = useState(false);
+  const [settings, setSettings] = useState(null);
+  const [loadingSettings, setLoadingSettings] = useState(true);
 
   async function load() {
     try {
@@ -19,6 +21,10 @@ export default function Home() {
   }
 
   useEffect(() => {
+    fetchAppSettings()
+      .then((s) => setSettings(s))
+      .catch(() => {})
+      .finally(() => setLoadingSettings(false));
     load();
   }, []);
 
@@ -110,17 +116,17 @@ export default function Home() {
         </div>
         <div className="action-card-reward">
           <span>+</span>
-          <span>250 Coins</span>
+          <span>{Number(settings?.dailyRewardCoins) || 250} Coins</span>
         </div>
         <button
           className="btn"
-          disabled={claiming || alreadyClaimedToday}
+          disabled={claiming || alreadyClaimedToday || loadingSettings}
           onClick={() => {
             playClick();
             handleDailyClaim();
           }}
         >
-          {alreadyClaimedToday ? "✓ Claimed Today" : claiming ? "Claiming…" : "CLAIM +250"}
+          {alreadyClaimedToday ? "✓ Claimed Today" : claiming ? "Claiming…" : `CLAIM +${Number(settings?.dailyRewardCoins) || 250}`}
         </button>
       </div>
 
@@ -135,17 +141,17 @@ export default function Home() {
         </div>
         <div className="action-card-reward">
           <span>+</span>
-          <span>100 Coins</span>
+          <span>{Number(settings?.adRewardCoins) || 100} Coins</span>
         </div>
         <button
           className="btn"
-          disabled={watchingAd}
+          disabled={watchingAd || loadingSettings}
           onClick={() => {
             playClick();
             handleWatchAd();
           }}
         >
-          {watchingAd ? "Loading Ad…" : "WATCH AD +100"}
+          {watchingAd ? "Loading Ad…" : `WATCH AD +${Number(settings?.adRewardCoins) || 100}`}
         </button>
       </div>
 

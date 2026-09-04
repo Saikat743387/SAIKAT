@@ -8,3 +8,5 @@ create*
 reset*
 verify*
 *.local
+.env.local
+.env.production
